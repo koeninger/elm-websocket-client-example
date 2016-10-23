@@ -95,12 +95,22 @@ viewTable rows =
 
 viewHeader : Row -> Html Msg
 viewHeader firstrow =
-    tr [] (List.map (\x -> th [] [ text x ]) (Dict.keys firstrow))
+    tr [] (List.map viewHeaderCell (Dict.keys firstrow))
+
+
+viewHeaderCell : String -> Html Msg
+viewHeaderCell x =
+    th [] [ text x ]
 
 
 viewRow : Row -> Html Msg
 viewRow row =
-    tr [] (List.map (\x -> th [] [ text (toString x) ]) (Dict.values row))
+    tr [] (List.map viewCell (Dict.values row))
+
+
+viewCell : a -> Html Msg
+viewCell x =
+    td [] [ text (toString x) ]
 
 
 viewMessage : String -> Html msg
