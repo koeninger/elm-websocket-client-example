@@ -3,7 +3,7 @@ module Main exposing (..)
 import Html exposing (..)
 import Html.App as Html
 import WebSocket
-import Json.Decode exposing (..)
+import Json.Decode as Decode exposing (Decoder)
 import Dict exposing (..)
 
 
@@ -26,8 +26,14 @@ echoServer =
 -- MODEL
 
 
+type JsScalar
+    = JsInt Int
+    | JsFloat Float
+    | JsString String
+
+
 type alias Row =
-    Dict String Int
+    Dict String JsScalar
 
 
 type alias Model =
@@ -49,11 +55,20 @@ type Msg
     = NewMessage String
 
 
+jsScalarDecoder : Decoder JsScalar
+jsScalarDecoder =
+    Decode.oneOf
+        [ Decode.map JsInt Decode.int
+        , Decode.map JsFloat Decode.float
+        , Decode.map JsString Decode.string
+        ]
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NewMessage str ->
-            case decodeString (Json.Decode.list (dict int)) str of
+            case Decode.decodeString (Decode.list (Decode.dict jsScalarDecoder)) str of
                 Ok rows ->
                     ( { model | rows = rows }, Cmd.none )
 
@@ -108,9 +123,22 @@ viewRow row =
     tr [] (List.map viewCell (Dict.values row))
 
 
-viewCell : a -> Html Msg
+viewCell : JsScalar -> Html Msg
 viewCell x =
-    td [] [ text (toString x) ]
+    td [] [ viewJsScalar x ]
+
+
+viewJsScalar : JsScalar -> Html Msg
+viewJsScalar x =
+    case x of
+        JsInt i ->
+            text (toString i)
+
+        JsFloat f ->
+            text (toString f)
+
+        JsString s ->
+            text s
 
 
 viewMessage : String -> Html msg
